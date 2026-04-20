@@ -9,7 +9,7 @@ The exercise describes a folder named `interview-problem/`; this repo uses the s
 | Exercise (conceptual) | This repository |
 |------------------------|-----------------|
 | `TodoApi/` (controllers, models, services, `Program.cs`) | `TodoApi/` — plus `Data/` (schema bootstrap), `Options/` (configuration binding) |
-| `TodoApi.Tests/` | `TodoApi.Tests/` — tests grouped under `Integration/` (HTTP + in-memory config) and `Services/` (persistence behavior with a temp database file) |
+| `TodoApi.Tests/` | `TodoApi.Tests/` — `Controllers/` (**NUnit** + **Moq** unit tests for `TodosController`), `Integration/` (HTTP via `WebApplicationFactory`), `Services/` (`TodoService` against a temp SQLite file). Shared `GlobalUsings.cs` imports NUnit and Moq. |
 
 ## Problems Identified
 
@@ -40,7 +40,7 @@ The exercise describes a folder named `interview-problem/`; this repo uses the s
 - **Validation** — `CreateTodoRequest` / `UpdateTodoRequest` use data annotations (`Required`, `MinLength`, `MaxLength`). `[ApiController]` returns **400** for invalid models without manual try/catch.
 - **Reasoning (validation)** — Central validation avoids duplicating checks in every action and returns consistent problem details for bad input.
 
-- **Testing** — **`TodoApi.Tests/Services`** exercises `TodoService` against a **private temporary SQLite file** per test class instance (create/read/update/delete, null description, not-found paths, ordering). **`TodoApi.Tests/Integration`** uses **`WebApplicationFactory<Program>`** with configuration overriding the DB path so runs do not touch `todos.db`. Integration tests cover **success paths** (201, 200, 204) and **negative paths** (404, 400 validation on create and update). A **non-parallel xUnit collection** avoids flaky shared state on one factory.
+- **Testing** — **`TodoApi.Tests/Controllers`** uses **NUnit** and **Moq** to mock **`ITodoService`** and assert HTTP results (`CreatedAtActionResult`, `OkObjectResult`, `NotFoundResult`, `NoContentResult`) without SQLite or routing. **`TodoApi.Tests/Services`** uses NUnit and a **temporary SQLite file** per test (`[SetUp]` / `[TearDown]`) for real persistence (create/read/update/delete, null description, not-found paths, ordering). **`TodoApi.Tests/Integration`** uses **`WebApplicationFactory<Program>`** with configuration overriding the DB path; **`[NonParallelizable]`** on the fixture avoids flaky shared state. The test project references **`Microsoft.AspNetCore.App`** so MVC types (e.g. `UrlActionContext`) resolve; **`FixedUrlHelper`** implements **`IUrlHelper`** for `CreatedAtAction` in controller unit tests.
 - **Target framework** — Projects target **.NET 9** so `dotnet test` runs on machines that have newer runtimes only; to match the original **.NET 8** template, set `TargetFramework` to `net8.0` in both `.csproj` files and align `Microsoft.AspNetCore.Mvc.Testing` to 8.x.
 
 ## How to Run

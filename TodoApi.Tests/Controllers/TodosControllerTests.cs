@@ -16,12 +16,7 @@ public class TodosControllerTests
     {
         _todoService = new Mock<ITodoService>();
         _controller = new TodosController(_todoService.Object);
-
-        var urlHelper = new Mock<IUrlHelper>();
-        urlHelper
-            .Setup(u => u.Action(It.IsAny<UrlActionContext>()))
-            .Returns("http://localhost/api/todos/42");
-        _controller.Url = urlHelper.Object;
+        _controller.Url = new FixedUrlHelper();
     }
 
     [Test]
