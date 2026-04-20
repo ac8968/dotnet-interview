@@ -1,14 +1,16 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace TodoApi.Models;
 
-public class Todo
+public class CreateTodoRequest
 {
-    public int Id { get; set; }
-
+    [Required]
+    [MinLength(1)]
+    [MaxLength(500)]
     public string Title { get; set; } = string.Empty;
 
+    [MaxLength(4000)]
     public string? Description { get; set; }
 
     public bool IsCompleted { get; set; }
-
-    public DateTime CreatedAt { get; set; }
 }

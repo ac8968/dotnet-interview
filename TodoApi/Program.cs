@@ -1,18 +1,24 @@
-using Microsoft.Data.Sqlite;
+using Microsoft.Extensions.Options;
+using TodoApi.Data;
+using TodoApi.Options;
+using TodoApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+builder.Services.Configure<TodoDatabaseOptions>(
+    builder.Configuration.GetSection(TodoDatabaseOptions.SectionName));
+
+builder.Services.AddScoped<ITodoService, TodoService>();
+
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-InitializeDatabase();
+var dbOptions = app.Services.GetRequiredService<IOptions<TodoDatabaseOptions>>().Value;
+DatabaseInitializer.EnsureCreated(dbOptions.ConnectionString);
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -26,24 +32,3 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-
-void InitializeDatabase()
-{
-    var connectionString = "Data Source=todos.db";
-    using var connection = new SqliteConnection(connectionString);
-    connection.Open();
-
-    var command = connection.CreateCommand();
-    command.CommandText = @"
-        CREATE TABLE IF NOT EXISTS Todos (
-            Id INTEGER PRIMARY KEY AUTOINCREMENT,
-            Title TEXT NOT NULL,
-            Description TEXT,
-            IsCompleted INTEGER NOT NULL DEFAULT 0,
-            CreatedAt TEXT NOT NULL
-        )
-    ";
-    command.ExecuteNonQuery();
-
-    Console.WriteLine("Database initialized successfully");
-}
